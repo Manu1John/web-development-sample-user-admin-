@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel='stylesheet' href='/dashboard.css'>
+  <title>Simple Admin Panel</title>
+</head>
+<body>
+
+<header>
+    <h1>Admin Panel (CRUD)</h1>
+    <form action="/logout" method="post">
+<button type="submit" class="delete">Logout</button>
+    </form>
+  
+</header>
+
+<div class="container">
+  <form id="crudForm">
+    <input type="text" id="name" placeholder="Name" required />
+    <input type="email" id="email" placeholder="Email" required />
+    <button type="submit" class="create">Create</button>
+  </form>
+
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<script>
+  let data = [];
+  let editIndex = null;
+
+  const form = document.getElementById('crudForm');
+  const tableBody = document.getElementById('tableBody');
+
+  function render() {
+    tableBody.innerHTML = '';
+    data.forEach((item, index) => {
+      tableBody.innerHTML += `
+        <tr>
+          <td>${item.name}</td>
+          <td>${item.email}</td>
+          <td>
+            <button class="update" onclick="edit(${index})">Edit</button>
+            <button class="delete" onclick="removeItem(${index})">Delete</button>
+          </td>
+        </tr>
+      `;
+    });
+  }
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+
+    if (editIndex === null) {
+      data.push({ name, email });
+    } else {
+      data[editIndex] = { name, email };
+      editIndex = null;
+      form.querySelector('button').textContent = 'Create';
+    }
+
+    form.reset();
+    render();
+  });
+
+  function edit(index) {
+    document.getElementById('name').value = data[index].name;
+    document.getElementById('email').value = data[index].email;
+    editIndex = index;
+    form.querySelector('button').textContent = 'Update';
+  }
+
+  function removeItem(index) {
+    data.splice(index, 1);
+    render();
+  }
+</script>
+
+</body>
+</html>

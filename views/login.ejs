@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<link rel="stylesheet" href="/login.css">
+</head>
+<body>
+    
+<div class="wrapper fadeInDown">
+  <div id="formContent">
+    <!-- Tabs Titles -->
+
+    <!-- Icon -->
+    <div class="fadeIn first">
+    <h1 class="lead"> Login</h1>
+    </div>
+<% if (typeof error !== "undefined" && error) { %>
+  <div class="alert alert-danger"><%= error %></div>
+<% } %>
+
+    <!-- Login Form -->
+    <form action="/home" method="post">
+      <input type="text" id="login" class="fadeIn second" 
+      name="Username" placeholder="Username"
+       required minlength="3" maxlength="12" 
+           pattern=".*\S.*" autocomplete="off"
+    title="Username cannot be empty or contain only spaces">
+      <input type="text" id="password" class="fadeIn third"
+       name="Password" placeholder="Password"
+        required minlength="3" maxlength="12" 
+            pattern=".*\S.*" autocomplete="off"
+    title="Password cannot be empty or contain only spaces" style="-webkit-text-security: disc;">
+      <input type="submit" class="fadeIn fourth" value="Log In">
+      <p class="lead">don't you have an account? <span><a href="/signup">signup here</a></span></p>
+    </form>
+  </div>
+</div>
+</body>
+</html>
