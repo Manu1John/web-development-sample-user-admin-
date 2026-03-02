@@ -1,11 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="/dashboard.css">
-  <title>Admin Panel</title>
-</head>
+<link rel="stylesheet" href="/dashboard.css">
 <body>
 
 <header>
@@ -16,6 +9,19 @@
 </header>
 
 <div class="container">
+
+  <!-- SEARCH -->
+  <form method="GET" action="/dashboard">
+    <input
+      type="text"
+      name="search"
+      placeholder="Search by name or email"
+      value="<%= search || '' %>"
+    />
+    <button type="submit">Search</button>
+  </form>
+
+  <hr>
 
   <!-- CREATE USER -->
   <form action="/admin/create" method="POST">
@@ -37,8 +43,15 @@
       </tr>
     </thead>
     <tbody>
+      <% if (users.length === 0) { %>
+        <tr>
+          <td colspan="4">No users found</td>
+        </tr>
+      <% } %>
+
       <% users.forEach(user => { %>
         <tr>
+
           <!-- UPDATE USER -->
           <form action="/admin/update/<%= user._id %>" method="POST">
             <td>
@@ -63,6 +76,7 @@
               </button>
             </form>
           </td>
+
         </tr>
       <% }) %>
     </tbody>
@@ -71,4 +85,3 @@
 </div>
 
 </body>
-</html>

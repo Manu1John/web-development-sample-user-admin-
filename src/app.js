@@ -7,7 +7,8 @@ const bcrypt = require("bcrypt")
 
 app.listen(3000, () => console.log("server started"))
 
-// middleware
+// ================= MIDDLEWARE =================
+
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 app.use(express.static("public"))
@@ -64,21 +65,31 @@ app.post("/dashboard", (req, res) => {
 
 app.post("/logout", (req, res) => {
   delete req.session.user
-  res.redirect("/admin")
+    res.redirect("/admin")
+  
 })
 
 // ================= ADMIN DASHBOARD + CRUD =================
 
-// READ users
+// READ + SEARCH users
 app.get("/dashboard", isAuthenticated, async (req, res) => {
-  const users = await collection.find()
+  const search = req.query.search || ""
+
+  const users = await collection.find({
+    $or: [
+      { name: { $regex: search, $options: "i" } },
+      { email: { $regex: search, $options: "i" } },
+    ],
+  })
+
   res.render("dashboard", {
     admin: req.session.user,
     users,
+    search,
   })
 })
 
-// CREATE user (admin)
+// CREATE user
 app.post("/admin/create", isAuthenticated, async (req, res) => {
   const { name, email, password } = req.body
 
@@ -102,7 +113,7 @@ app.post("/admin/create", isAuthenticated, async (req, res) => {
   res.redirect("/dashboard")
 })
 
-// UPDATE user (admin)
+// UPDATE user
 app.post("/admin/update/:id", isAuthenticated, async (req, res) => {
   const { name, email } = req.body
 
@@ -114,7 +125,7 @@ app.post("/admin/update/:id", isAuthenticated, async (req, res) => {
   res.redirect("/dashboard")
 })
 
-// DELETE user (admin)
+// DELETE user
 app.post("/admin/delete/:id", isAuthenticated, async (req, res) => {
   await collection.findByIdAndDelete(req.params.id)
   res.redirect("/dashboard")
@@ -130,12 +141,21 @@ app.get("/", (req, res) => {
   }
 })
 
-function authenticatedUser(req, res, next) {
-  if (req.session.users) {
-    next()
-  } else {
-    res.render("login")
+// IMPORTANT: force logout if user deleted
+async function authenticatedUser(req, res, next) {
+  if (!req.session.users) {
+    return res.redirect("/")
   }
+
+  const userExists = await collection.findById(req.session.users.id)
+
+  if (!userExists) {
+    return req.session.destroy(() => {
+      res.redirect("/")
+    })
+  }
+
+  next()
 }
 
 app.get("/home", authenticatedUser, (req, res) => {
@@ -152,7 +172,32 @@ app.get("/signup", (req, res) => {
 
 // SIGNUP
 app.post("/", async (req, res) => {
-  const { Username, Password, Email } = req.body
+  const { Username, Password, Email, confirmPassword } = req.body
+
+  // Check empty fields
+  if (!Username || !Email || !Password || !confirmPassword) {
+    return res.render("signup", {
+      error: "All fields are required",
+    })
+  }
+
+  // Confirm password match
+  if (Password !== confirmPassword) {
+    return res.render("signup", {
+      error: "Passwords do not match",
+    })
+  }
+
+  // Strong password validation
+  const strongPassword =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/
+
+  if (!strongPassword.test(Password)) {
+    return res.render("signup", {
+      error:
+        "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character.",
+    })
+  }
 
   const existUser = await collection.findOne({ name: Username })
   if (existUser) {
@@ -169,9 +214,10 @@ app.post("/", async (req, res) => {
     Password: hashedPassword,
   })
 
-  res.redirect("/")
+  res.render("signup", {
+    success: "Account created successfully. Please log in.",
+  })
 })
-
 // LOGIN
 app.post("/home", async (req, res) => {
   const { Username, Password } = req.body
@@ -196,6 +242,7 @@ app.post("/home", async (req, res) => {
 })
 
 app.post("/logoutuser", (req, res) => {
-  delete req.session.users
-  res.redirect("/")
+ delete req.session.users
+    res.redirect("/")
+  
 })

@@ -1,13 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+
   <link rel="stylesheet" href="https://unpkg.com/bootstrap@5.3.3/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://unpkg.com/bs-brain@2.0.4/components/registrations/registration-10/assets/css/registration-10.css">
-</head>
-<body>
+
   <!-- Registration 10 - Bootstrap Brain Component -->
 <section class="bg-light py-3 py-md-5 py-xl-8">
   <div class="container">
@@ -23,23 +17,26 @@
               <div class="row gy-3 overflow-hidden">
                 <div class="col-12">
                   <div class="form-floating mb-3">
-                    <input type="text" class="form-control" name="Username" id="firstName" placeholder="First Name" required required minlength="3" maxlength="12" 
-           pattern=".*\S.*" autocomplete="off">
+                    <input type="text" class="form-control" name="Username" id="username" placeholder="Username"  autocomplete="off">
                     <label class="form-label">Username</label>
                   </div>
                 </div>
                 <div class="col-12">
                   <div class="form-floating mb-3">
-                    <input type="email" class="form-control" name="Email" id="email" placeholder="name@example.com"  required minlength="3" 
-           pattern=".*\S.*" autocomplete="off">
+                    <input type="email" class="form-control" name="Email" id="email" placeholder="name@example.com"   autocomplete="off">
                     <label for="email" class="form-label">Email</label>
                   </div>
                 </div>
                 <div class="col-12">
                   <div class="form-floating mb-3">
-                    <input type="password" class="form-control" name="Password" id="password" value="" placeholder="Password"   required minlength="3" maxlength="12" 
-            pattern=".*\S.*" autocomplete="off">
+                    <input type="password" class="form-control" name="Password" id="password" value="" placeholder="Password"  autocomplete="off">
                     <label for="password" class="form-label">Password</label>
+                  </div>
+                </div>
+                                <div class="col-12">
+                  <div class="form-floating mb-3">
+                    <input type="password" class="form-control" name="confirmPassword" id="confirmPassword" value="" placeholder="confirm Password"  autocomplete="off">
+                    <label for="confirmPassword" class="form-label">Password</label>
                   </div>
                 </div>
 
@@ -50,6 +47,12 @@
                   <% if (typeof error !== "undefined" && error) { %>
   <div class="alert alert-danger"><%= error %></div>
 <% } %>
+
+            <% if (typeof success !== "undefined" && success) { %>
+              <div class="alert alert-success text-center">
+                <%= success %>
+              </div>
+            <% } %>
                 </div>
               </div>
             </form>
@@ -62,5 +65,39 @@
     </div>
   </div>
 </section>
-</body>
-</html>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelector("form").addEventListener("submit", formValidate)
+  })
+
+  function formValidate(e) {
+    e.preventDefault()
+
+    let username = document.getElementById("username").value.trim()
+    let email = document.getElementById("email").value.trim()
+    let password = document.getElementById("password").value
+    let confirmPassword = document.getElementById("confirmPassword").value
+
+    const strongPassword =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/
+
+    if (!username || !email || !password || !confirmPassword) {
+      alert("All fields are required")
+      return
+    }
+
+    if (!strongPassword.test(password)) {
+      alert(
+        "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character."
+      )
+      return
+    }
+
+    if (password !== confirmPassword) {
+      alert("Passwords do not match")
+      return
+    }
+
+    e.target.submit()
+  }
+</script>
