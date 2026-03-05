@@ -11,12 +11,14 @@
 <div class="container">
 
   <!-- SEARCH -->
-  <form method="GET" action="/dashboard">
+  <form method="GET" action="/dashboard" id="searchForm">
     <input
       type="text"
       name="search"
+      id="searchInput"
       placeholder="Search by name or email"
       value="<%= search || '' %>"
+      autocomplete="off"
     />
     <button type="submit">Search</button>
   </form>
@@ -42,7 +44,7 @@
         <th colspan="2">Actions</th>
       </tr>
     </thead>
-    <tbody>
+    <tbody id="userTableBody">
       <% if (users.length === 0) { %>
         <tr>
           <td colspan="4">No users found</td>
@@ -85,3 +87,79 @@
 </div>
 
 </body>
+
+
+  <script>
+  const searchInput = document.getElementById("searchInput")
+  const tableBody = document.getElementById("userTableBody")
+
+  let debounceTimer
+
+  searchInput.addEventListener("input", function () {
+    clearTimeout(debounceTimer)
+
+    debounceTimer = setTimeout(() => {
+      fetchUsers(searchInput.value)
+    }, 400)
+  })
+
+  async function fetchUsers(searchValue) {
+    try {
+      const response = await fetch(
+        `/dashboard?search=${encodeURIComponent(searchValue)}`,
+        {
+          headers: {
+            "X-Requested-With": "XMLHttpRequest"
+          }
+        }
+      )
+
+      const users = await response.json()
+
+      renderUsers(users)
+    } catch (error) {
+      console.error("Search failed:", error)
+    }
+  }
+
+  function renderUsers(users) {
+    tableBody.innerHTML = ""
+
+    if (users.length === 0) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="4">No users found</td>
+        </tr>
+      `
+      return
+    }
+
+    users.forEach(user => {
+      tableBody.innerHTML += `
+        <tr>
+          <td>
+            <form action="/admin/update/${user._id}" method="POST">
+              <input type="text" name="name" value="${user.name}" required>
+          </td>
+          <td>
+              <input type="email" name="email" value="${user.email}" required>
+          </td>
+          <td>
+              <button type="submit" class="update">Update</button>
+            </form>
+          </td>
+          <td>
+            <form action="/admin/delete/${user._id}" method="POST">
+              <button type="submit" class="delete"
+                onclick="return confirm('Are you sure you want to delete this user?')">
+                Delete
+              </button>
+            </form>
+          </td>
+        </tr>
+      `
+    })
+  }
+</script>
+
+

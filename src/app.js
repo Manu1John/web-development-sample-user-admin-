@@ -4,7 +4,7 @@ const app = express()
 const session = require("express-session")
 const collection = require("./config")
 const bcrypt = require("bcrypt")
-
+const { error } = require("console")
 app.listen(3000, () => console.log("server started"))
 
 // ================= MIDDLEWARE =================
@@ -75,13 +75,25 @@ app.post("/logout", (req, res) => {
 app.get("/dashboard", isAuthenticated, async (req, res) => {
   const search = req.query.search || ""
 
-  const users = await collection.find({
-    $or: [
-      { name: { $regex: search, $options: "i" } },
-      { email: { $regex: search, $options: "i" } },
-    ],
-  })
+  let query = {}
 
+  if (search) {
+    query = {
+      $or: [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ],
+    }
+  }
+
+  const users = await collection.find(query)
+
+  // If AJAX request → return JSON
+  if (req.headers["x-requested-with"] === "XMLHttpRequest") {
+    return res.json(users)
+  }
+
+  // Normal page load
   res.render("dashboard", {
     admin: req.session.user,
     users,
@@ -141,7 +153,7 @@ app.get("/", (req, res) => {
   }
 })
 
-// IMPORTANT: force logout if user deleted
+//  force logout if user deleted
 async function authenticatedUser(req, res, next) {
   if (!req.session.users) {
     return res.redirect("/")
@@ -174,35 +186,19 @@ app.get("/signup", (req, res) => {
 app.post("/", async (req, res) => {
   const { Username, Password, Email, confirmPassword } = req.body
 
-  // Check empty fields
-  if (!Username || !Email || !Password || !confirmPassword) {
+  const existUsername = await collection.findOne({ name: Username })
+  const existEmail = await collection.findOne({email:Email})
+  if (existUsername && existEmail) {
     return res.render("signup", {
-      error: "All fields are required",
+      error: "email and username is already taken!!"
     })
-  }
-
-  // Confirm password match
-  if (Password !== confirmPassword) {
-    return res.render("signup", {
-      error: "Passwords do not match",
+  }else if(existEmail){
+    return res.render("signup",{
+      error:"Email is already taken"
     })
-  }
-
-  // Strong password validation
-  const strongPassword =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/
-
-  if (!strongPassword.test(Password)) {
-    return res.render("signup", {
-      error:
-        "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character.",
-    })
-  }
-
-  const existUser = await collection.findOne({ name: Username })
-  if (existUser) {
-    return res.render("signup", {
-      error: "Username is already taken",
+  }else if (existUsername){
+    return res.render("signup",{
+      error:"username already taken"
     })
   }
 
@@ -214,9 +210,9 @@ app.post("/", async (req, res) => {
     Password: hashedPassword,
   })
 
-  res.render("signup", {
-    success: "Account created successfully. Please log in.",
-  })
+return res.render("signup", {
+  success: "Account created successfully! Redirecting to login...",
+})
 })
 // LOGIN
 app.post("/home", async (req, res) => {
@@ -238,7 +234,9 @@ app.post("/home", async (req, res) => {
     email: user.email,
   }
 
-  res.redirect("/home")
+  res.render("login",{
+    success:"login success"
+  })
 })
 
 app.post("/logoutuser", (req, res) => {
